@@ -16,22 +16,39 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip python3-dev git zip unzip \
+            autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
+            libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev \
+            openjdk-17-jdk
+
+      - name: Install Python dependencies
         run: |
           pip install --upgrade pip
           pip install buildozer cython==0.29.37
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
       - name: Build APK
+        env:
+          _JAVA_OPTIONS: "-Xmx4096m"
         run: |
-          buildozer -v android debug
+          buildozer -v android debug 2>&1 | tee build.log
+        continue-on-error: true
+
+      - name: Check build output
+        run: |
+          if [ -d bin ] && [ -n "$(ls -A bin/*.apk 2>/dev/null)" ]; then
+            echo "APK built successfully"
+          else
+            echo "Build failed, checking log..."
+            cat build.log
+            exit 1
+          fi
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: waterpurifier-app-apk
