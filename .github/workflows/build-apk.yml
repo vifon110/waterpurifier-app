@@ -8,18 +8,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: kivy/buildozer:latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          workdir: .
-          buildozer_version: stable
+      - name: Build APK
+        run: |
+          buildozer -v android debug 2>&1 | tee build.log
+        continue-on-error: true
+
+      - name: Check build output
+        run: |
+          if [ -d bin ] && [ -n "$(ls -A bin/*.apk 2>/dev/null)" ]; then
+            echo "APK built successfully"
+          else
+            echo "Build failed, checking log..."
+            cat build.log
+            exit 1
+          fi
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: waterpurifier-app-apk
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
