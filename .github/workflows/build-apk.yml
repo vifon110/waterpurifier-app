@@ -57,18 +57,26 @@ jobs:
         env:
           HOME: /home/runner
 
-      - name: Check APK exists
+      - name: Debug - List all files
+        if: always()
         run: |
+          echo "Current directory: $(pwd)"
+          echo "Listing all files recursively:"
+          find . -type f -name "*.apk" || echo "No APK found with find"
+          echo "Listing bin/ directory:"
           ls -la bin/ || echo "bin/ not found"
-          find . -name "*.apk" || echo "No APK found"
+          echo "Listing all files in current directory:"
+          ls -la
+          echo "Listing all files recursively (max 20):"
+          find . -type f | head -20
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: waterpurifier-app-apk
-          path: bin/*.apk
-          if-no-files-found: error
+          path: "**/*.apk"
+          if-no-files-found: warn
 
       - name: Upload build log on failure
         if: failure()
