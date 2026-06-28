@@ -14,9 +14,8 @@ jobs:
 
       - name: Build APK
         run: |
-          pwd
-          ls -la
-          buildozer -v android debug 2>&1 | tee build.log
+          export HOME=/root
+          yes | buildozer -v android debug 2>&1 | tee build.log
 
       - name: List output files
         if: always()
