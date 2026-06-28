@@ -11,76 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3-pip \
-            python3-dev \
-            git \
-            zip \
-            unzip \
-            zlib1g-dev \
-            cmake \
-            libffi-dev \
-            libssl-dev \
-            autoconf \
-            automake \
-            libtool \
-            pkg-config \
-            build-essential \
-            openjdk-17-jdk \
-            wget \
-            curl \
-            patchelf
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Install Python dependencies
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython==0.29.19
-
-      - name: Build APK
-        run: |
-          export HOME=/home/runner
-          yes | buildozer -v android debug 2>&1 | tee build.log
-        env:
-          HOME: /home/runner
-
-      - name: Debug - List all files
-        if: always()
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Listing all files recursively:"
-          find . -type f -name "*.apk" || echo "No APK found with find"
-          echo "Listing bin/ directory:"
-          ls -la bin/ || echo "bin/ not found"
-          echo "Listing all files in current directory:"
-          ls -la
-          echo "Listing all files recursively (max 20):"
-          find . -type f | head -20
+      - name: Build with Buildozer
+        uses: ArtemSB/buildozer-action@master
+        id: buildozer
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: waterpurifier-app-apk
-          path: "**/*.apk"
-          if-no-files-found: warn
-
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
+          name: waterpurifier-apk
+          path: bin/*.apk
+          if-no-files-found: error
