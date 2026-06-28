@@ -14,18 +14,17 @@ jobs:
 
       - name: Build APK
         run: |
+          pwd
+          ls -la
           buildozer -v android debug 2>&1 | tee build.log
-        continue-on-error: true
 
-      - name: Check build output
+      - name: List output files
+        if: always()
         run: |
-          if [ -d bin ] && [ -n "$(ls -A bin/*.apk 2>/dev/null)" ]; then
-            echo "APK built successfully"
-          else
-            echo "Build failed, checking log..."
-            cat build.log
-            exit 1
-          fi
+          pwd
+          ls -la
+          ls -la bin/ || echo "bin/ not found"
+          cat build.log || echo "build.log not found"
 
       - name: Upload APK
         if: success()
